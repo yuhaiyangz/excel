@@ -1,0 +1,218 @@
+<!--
+ * @Author: yuhaiyangz@163.com
+ * @Date: 2022-08-24 17:45:39
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2022-12-07 09:17:40
+ * @Description: 登录页面
+-->
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中诚信指数登录</title>
+    <!-- webpackIgnore: true -->
+    <!-- <script type="text/javascript" src="/assets/js/office.js"></script> -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/axios.min.js"></script>
+    <!-- Import style -->
+    <!-- webpackIgnore: true -->
+    <link rel="stylesheet" href="/assets/js/element-ui.css" />
+    <!-- Import Vue 3 -->
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/vue.global.js"></script>
+    <!-- Import component library -->
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/element.ui.full.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+        .loginBox{
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .box{
+            width: 350px;
+            background-color: #fff;
+            border-radius: 3px;
+            padding: 20px 0;
+        }
+        .loginBox .bg{
+            filter: blur(8px);
+            background-image: url('/assets/3.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center center;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .loginBox .logo {
+            height: 60px;
+            width: 60px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .loginBox h1 {
+            font-size: 16px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .loginBox ul {
+            padding: 0 20px;
+            margin-top: 30px;
+        }
+
+        .loginBox ul li {
+            display: flex;
+        }
+
+        .loginBox ul li>label {
+            width: 80px;
+            text-align: right;
+            display: block;
+            font-size: 12px;
+            line-height: 30px;
+        }
+
+        .loginBox ul li input {
+            padding: 5px;
+            height: 30px;
+        }
+
+        .loginBox ul li {
+            margin-top: 20px;
+        }
+
+        .loginBox ul li.top {
+            margin-top: 50px;
+        }
+
+        .loginBox ul li button {
+            width: 100%;
+            margin: 0 auto;
+            height: 30px;
+            line-height: 30px;
+            background-color: #008BCF;
+            border: 0;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        .loginBox .more {
+            font-size: 12px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+        }
+
+        .loginBox .more a {
+            text-decoration: none;
+            color: #008BCF;
+        }
+
+        .el-checkbox--small {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body class="loginBox">
+    <div class="bg"></div>
+    <div id="loginBox" class="box">
+        <img class="logo" src="/assets/icon-80.png" alt="logo">
+        <h1>中诚信指数登录</h1>
+        <ul>
+            <li>
+                <el-input v-model="userName" type="text" placeholder="请输入用户名" size="small" clearable></el-input>
+            </li>
+            <li>
+                <el-input v-model="passWord" type="passWord" placeholder="请输入用密码" size="small" clearable show-password></el-input>
+            </li>
+            <li class="top">
+                <el-button type="primary" @click="login" :disabled="!userName || !passWord">登录</el-button>
+            </li>
+
+        </ul>
+        <div class="more">
+            <el-tooltip content="将为您保存30天" raw-content>
+                <el-checkbox v-model="rememberPassword" label="记住密码" size="small"></el-checkbox>
+            </el-tooltip>
+
+            <a href="https://excel.ccxindices.com/join.html" target="_blank">如何注册？</a>
+        </div>
+    </div>
+
+</body>
+<script>
+    const { createApp, ref,onMounted } = Vue;
+    const { ElMessage } = ElementPlus
+    const app = createApp({
+        setup() {
+            const userName = ref('')
+            const passWord = ref('')
+            const rememberPassword = ref(true)
+            const login = () => {
+                if (!userName.value || !passWord.value) {
+                    return ElMessage.error('用户名密码不能为空')
+                }
+                // Office.context.ui.messageParent(JSON.stringify({ userName: userName.value, passWord: passWord.value, rememberPassword: rememberPassword.value }));
+                // return
+                const params = new URLSearchParams();
+                params.append('accessKey', userName.value);
+                params.append('secretKey', passWord.value);
+                axios.post('https://gray.openapi.ccxd.cn/idp-openapi/auth/merchant/valid/form-data',params,{
+                    headers:{'Content-Type':'application/x-www-form-urlencoded'}
+                }).then(res=>{
+                    if(res.data.code === 2000){
+                        Office.context.ui.messageParent(JSON.stringify({ userName: userName.value, passWord: passWord.value, rememberPassword: rememberPassword.value }));
+                        localStorage.setItem('userName',userName.value)
+                    }else{
+                        ElMessage.error('用户名或密码不正确！')
+                    }
+                }).catch(err=>{
+                    ElMessage.error('网络错误，请稍候重试！')
+                })
+            }
+            onMounted(()=>{
+                const name = localStorage.getItem('userName');
+                if(name){
+                    userName.value = name
+                }
+            })
+            return {
+                userName,
+                passWord,
+                login,
+                rememberPassword
+            }
+        }
+    })
+    app.use(ElementPlus)
+    app.mount('#loginBox')
+</script>
+
+</html>

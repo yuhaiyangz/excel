@@ -1,0 +1,1392 @@
+<!--
+ * @Author: yuhaiyangz@163.com
+ * @Date: 2022-09-28 16:04:42
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2022-12-28 10:07:50
+ * @Description: 导入数据
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据导入</title>
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/axios.min.js"></script>
+    <!-- Import style -->
+    <!-- webpackIgnore: true -->
+    <link rel="stylesheet" href="/assets/js/element-ui.css" />
+    <!-- Import Vue 3 -->
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/vue.global.js"></script>
+    <!-- Import component library -->
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/element.ui.full.js"></script>
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/zh-cn.js"></script>
+    <!-- webpackIgnore: true -->
+    <link rel="stylesheet" href="/assets/css/getdata.css">
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="data">
+        <div v-loading="loading" element-loading-text="数据加载中，请耐心等待！" v-cloak>
+            <div class="checkCodeBox" v-if="step == 1">
+                <div class="box">
+                    <div class="a1">
+                        <div class="daor">
+                            <p @click="daor = 1" :class="daor == 1 && 'active'">指数选择</p>
+                            <p @click="daor = 2" :class="daor == 2 && 'active'">从Excel导入</p>
+                        </div>
+                        <div v-if="daor == 1" class="divCell cell1">
+                            <el-tree :data="codeListGroup" :props="defaultProps" node-key="code"
+                                @node-click="handleCheckChange" ref="codeListRef" highlight-current default-expand-all
+                                :filter-node-method="filterNode" />
+                        </div>
+                        <div v-else class="divCell cell1">
+                            <h4 style="margin-top: 10px;margin-left:10px">Excel导入地址</h4>
+                            <div class="display location">
+                                <el-input v-model="addrValues" placeholder="请选择code地址" size="small"></el-input>
+                                <img v-if="getAddrBtn" @click="getAddr(1)" src="/assets/check.png" alt="">
+                                <img v-else @click="getAddr(2)" src="/assets/sure.png" alt="">
+                            </div>
+                            <h4 style="margin-left: 10px">最终输出地址</h4>
+                            <div class="display location">
+                                <el-input v-model="addrValues1" placeholder="请选择输出地址" size="small"></el-input>
+                                <img v-if="getAddrBtn1" @click="getAddr(3)" src="/assets/check.png" alt="">
+                                <img v-else @click="getAddr(4)" src="/assets/sure.png" alt="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="a2 display">
+                        <div>
+                            <div class="display">
+                                <p>待选</p>
+                                <p>总数：{{waitCheck.length}}</p>
+                            </div>
+                            <div class="divCell cell2">
+                                <ul v-if="ifCheckChange" @mousedown="down" @mousemove="move" @mouseup="up">
+                                    <li ref="movable.dom" class="move"
+                                        :style="{top: movable.top,left: 'calc( 30% + 10px )',width:'30%',height: movable.height}">
+                                    </li>
+                                    <li :ref="(dom)=>push(dom,index,item.code,1)" :class="{check:item.check}"
+                                        v-for="(item,index) of waitCheck" :title="item.name"
+                                        @dblclick="sureCheck(item,1)">
+                                        {{item.code}} — {{item.name}}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="btnBox">
+                            <el-button size="small" @click="checkSingle()" :disabled="!waitCheck.length">&gt;
+                            </el-button>
+                            <el-button size="small" @click="checkall()" :disabled="!waitCheck.length">&gt;&gt;
+                            </el-button>
+                            <el-button size="small" @click="quCheckSingle()" :disabled="!endCheck.length">&lt;
+                            </el-button>
+                            <el-button size="small" @click="quCheckall()" :disabled="!endCheck.length">&lt;&lt;
+                            </el-button>
+                        </div>
+                    </div>
+                    <div class="a3">
+                        <div class="display">
+                            <p>选中</p>
+                            <p>总数：{{endCheck.length}}</p>
+                        </div>
+                        <div class="divCell cell2">
+                            <ul @mousedown="downEnd" @mousemove="moveEnd" @mouseup="upEnd">
+                                <li ref="movableEnd.dom" class="move"
+                                    :style="{top: movableEnd.top,left: 'calc( 69% + 10px )',width:'30%',height: movableEnd.height}">
+                                </li>
+                                <li :ref="(dom)=>push(dom,index,item.code,2)" :class="{check:item.check}"
+                                    v-for="(item,index) in endCheck" :title="item.name" @dblclick="sureCheck(item,2)">
+                                    {{item.code}} — {{item.name}}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer display">
+                    <!-- <el-input v-model="filterText" style="width:200px" placeholder="请输入关键字" size="small"></el-input> -->
+                    <el-select v-model="filterText" filterable placeholder="请输入关键字" :filter-method="filterMethod"
+                        size="small">
+                        <el-option v-for="item in allCodesListFilter" :key="item.code" :label="item.name"
+                            :value="item.code">
+                            <span style="float: left">{{ item.code }}</span>
+                            <span class="selectEllipsis" style="float: right; width: 200px;" :title="item.name">{{
+                                item.name }}</span>
+                        </el-option>
+                    </el-select>
+                    <div class="display" style="width:300px;align-items: center;">
+                        <p style="width:120px">输入代码</p>
+                        <el-input v-model="costomCode" placeholder="请输入code" size="small" @keyup.enter="enterCode()">
+                        </el-input>
+                    </div>
+                </div>
+                <div class="footerBtn">
+                    <el-button size="small" @click="cancel()">取消</el-button>
+                    <el-button type="primary" size="small" @click="step++" :disabled="endCheck.length == 0">下一步
+                    </el-button>
+                </div>
+            </div>
+            <div class="checkFnctionBox" v-if="step == 2">
+                <div class="box display">
+                    <div class="b1">
+                        <p>函数选择</p>
+                        <div class="divCell">
+                            <el-tree :data="checkFunList"
+                                :props="{children: 'list',label: 'name',class: customNodeClass}" node-key="name"
+                                @node-click="handleNodeClick" :default-expanded-keys="checkType" />
+                        </div>
+                    </div>
+                    <div class="b2">
+                        <p>已选函数</p>
+                        <div class="divCell">
+                            <el-table :data="endCheckFun"
+                                style="width: 100%;--el-table-header-bg-color:#eee;--el-table-header-text-color: #000;"
+                                size="small" border highlight-current-row size="small" height="100%">
+                                <el-table-column prop="name" label="函数名"></el-table-column>
+                                <el-table-column prop="code" label="函数表达式"></el-table-column>
+                                <el-table-column label="操作">
+                                    <template #default="{row}">
+                                        <el-button type="text" size="small" @click="deleteFun(row)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </div>
+                    </div>
+                </div>
+                <div class="footerBtn" style="margin-top: 10px">
+                    <el-button size="small" @click="cancel()">取消</el-button>
+                    <el-button size="small" @click="step--">上一步</el-button>
+                    <el-button type="primary" size="small" @click="step++" :disabled="endCheckFun.length == 0">下一步
+                    </el-button>
+                </div>
+            </div>
+            <div class="checkOtherBox" v-if="step == 3">
+                <h4>插入位置</h4>
+                <el-radio-group v-model="otherOptions.insertPosition" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">当前表</el-radio>
+                    <el-radio :label="2">新建表</el-radio>
+                </el-radio-group>
+                <h4>时间展示格式</h4>
+                <el-radio-group v-model="otherOptions.dataFormat" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">例 20221101</el-radio>
+                    <el-radio :label="2">例 2022/11/1</el-radio>
+                    <el-radio :label="3" disabled>例 2022-11-01</el-radio>
+                </el-radio-group>
+                <h4>时间选择</h4>
+                <div class="time">
+                    <el-date-picker v-model="timeAnge" type="daterange" unlink-panels range-separator="至"
+                        start-placeholder="开始时间" end-placeholder="结束时间" :shortcuts="shortcuts" :format="valueFormat"
+                        value-format="YYYYMMDD" :disabled-date="disabledDate" size="small" />
+                    <!-- <p>开始时间</p>
+                    <el-date-picker v-model="otherOptions.startTime" type="date" placeholder="开始时间" size="small"
+                        :disabled-date="disabledDate" :format="valueFormat" value-format="YYYYMMDD"></el-date-picker>
+                    <p>结束时间</p>
+                    <el-date-picker v-model="otherOptions.endTime" type="date" placeholder="结束时间" size="small"
+                        :disabled-date="disabledDate" :format="valueFormat" value-format="YYYYMMDD"></el-date-picker> -->
+                </div>
+                <h4>空值选择</h4>
+                <el-radio-group v-model="otherOptions.nullValue" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">空值</el-radio>
+                    <el-radio :label="2">fill前值</el-radio>
+                </el-radio-group>
+                <h4>指标排列方向</h4>
+                <el-radio-group v-model="otherOptions.direction" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">纵向排列</el-radio>
+                    <el-radio :label="2">横向排列</el-radio>
+                </el-radio-group>
+                <h4>日历日和交易日</h4>
+                <el-radio-group v-model="otherOptions.dataType" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">日历日</el-radio>
+                    <el-radio :label="2">交易日</el-radio>
+                </el-radio-group>
+                <h4>数据频率</h4>
+                <el-radio-group v-model="otherOptions.frequency" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">日度</el-radio>
+                    <el-radio :label="2">周度</el-radio>
+                    <el-radio :label="3">月度</el-radio>
+                    <el-radio :label="4">年度</el-radio>
+                </el-radio-group>
+                <h4>坐标轴设置</h4>
+                <el-radio-group v-model="otherOptions.axis" size="small" style="margin-left: 20px;">
+                    <el-radio :label="1">横轴:时间,纵轴:证券代码</el-radio>
+                    <el-radio :label="2">纵轴:时间,横轴:证券代码</el-radio>
+                </el-radio-group>
+                <div class="footerBtn">
+                    <el-button size="small" @click="cancel()">取消</el-button>
+                    <el-button size="small" @click="step--">上一步</el-button>
+                    <el-button type="primary" size="small" @click="submit()">完成</el-button>
+                </div>
+            </div>
+
+        </div>
+        <el-dialog v-model="dialogVisible" title="请输入参数" width="350px" style="--el-dialog-padding-primary:10px">
+            <ul>
+                <template v-for="item in setFunctionArg.argList">
+                    <li v-if="item.type == 'factor'">
+                        <p style="margin: 10px 0">{{item.label}}</p>
+                        <el-select v-model="item.arg" placeholder="请选择因子" size="small" style="width : 100%">
+                            <el-option v-for="itemChild in factorList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                    </li>
+                    <li v-else-if="item.type == 'positionType'">
+                        <p style="margin: 10px 0">{{item.label}}</p>
+                        <el-select v-model="item.arg" placeholder="请选择" size="small" style="width : 100%">
+                            <el-option v-for="itemChild in positionTypeLlst" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                    </li>
+                    <li v-else-if="item.type == 'scrollNumber'">
+                        <p style="margin: 10px 0">{{item.label}}</p>
+                        <el-select v-model="item.arg" placeholder="请选择" size="small" style="width : 100%">
+                            <el-option v-for="itemChild in ScrollNumberList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code" :disabled="itemChild.code === 1 && setFunctionArg.code == 'ccx_fund_dur_label'">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                    </li>
+                    <li v-else-if="item.type == 'scrollNumber1'">
+                        <p style="margin: 10px 0">{{item.label}}</p>
+                        <el-select v-model="item.arg" placeholder="请选择" size="small" style="width : 100%">
+                            <el-option v-for="itemChild in ScrollNumberList1" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                    </li>
+                    <li v-else-if="item.type == 'industrySort'">
+                        <p style="margin: 10px 0">{{item.label}}</p>
+                       <el-select v-model="item.arg" placeholder="请选择" size="small" style="width:100%;">
+                            <el-option v-for="(itemChild,index) in industrySortList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select> 
+                    </li>
+                    <li v-else-if="item.type == 'industryType'">
+                        <p style="margin: 10px 0">{{item.label}}</p>
+                       <el-select v-model="item.arg" placeholder="请选择" size="small" style="width:100%">
+                            <el-option v-for="(itemChild,index) in industryTypeList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select> 
+                    </li>
+                </template>
+            </ul>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="dialogVisible = false" size="small">取消</el-button>
+                    <el-button type="primary" @click="dialogSure()" size="small">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
+    </div>
+    <script>
+        const { createApp, ref, onMounted, reactive, watch, nextTick, computed } = Vue;
+        const { ElMessage, ElMessageBox } = ElementPlus
+        const app = createApp({
+            setup() {
+                const step = ref(1)//步骤
+                const loading = ref(false)
+                const daor = ref(1)
+                //指数选择************************** 
+                const filterText = ref('')//搜索
+                const waitCheck = ref([])//待选
+                const codeListRef = ref()
+                const costomCode = ref('')
+                const excAddrValueIsNull = ref(true)//插入的地址是否是空值
+                const isUpdateFun = ref(false) //是否为更新函数
+                const checkType = ref(['股票函数'])//选中的是哪个数据
+                const timeAnge = ref(null)//时间
+                const handleCheckChange = ({ code, type }) => {
+                    ifCheckChangeCode.value = code
+                    ifCheckChange.value = false
+                    nextTick(() => {
+                        ifCheckChange.value = true
+                    })
+                    if (type === 1) {
+                        checkType.value = ['股票函数']
+                        const odData = JSON.parse(JSON.stringify(codeList.value[0]))
+                        waitCheck.value = odData.filter(item => item.type.includes(code))
+                        waitCheck.value.forEach(item => {
+                            item.typeParent = code
+                        })
+                    } else if (type === 2) {
+                        checkType.value = ['基金函数']
+                        const odData = JSON.parse(JSON.stringify(codeList.value[1]))
+                        if (code === 'fund_code') {
+                            waitCheck.value = odData
+                            waitCheck.value.forEach(item => {
+                                item.typeParent = code
+                            })
+                        } else if (code === 'fund_valid_main') {
+                            waitCheck.value = odData.filter(item => item.main)
+                            waitCheck.value.forEach(item => {
+                                item.typeParent = code
+                            })
+                        } else {
+                            waitCheck.value = odData.filter(item => item.type === code && item.main)
+                            waitCheck.value.forEach(item => {
+                                item.typeParent = code
+                            })
+                        }
+                    } else if (type === 3) {
+                        checkType.value = ['中诚信指数函数']
+                        const odData = JSON.parse(JSON.stringify(codeList.value[2]))
+                        waitCheck.value = odData
+                        waitCheck.value.forEach(item => {
+                            item.typeParent = code
+                        })
+                    }
+                }
+                // end
+                const positionTypeLlst = [
+                    { name: '基金风格标签（全持仓）', code: 'detail' },
+                    { name: '基金风格标签（重仓股）', code: 'key' },
+                ]
+                const ScrollNumberList = [
+                    {name:'1期',code:1},
+                    {name:'2期',code:2},
+                    {name:'4期',code:4},
+                    {name:'6期',code:6}
+                ]
+                const ScrollNumberList1 = [
+                {name:'最近63个交易日',code:63},
+                {name:'最近126个交易日',code:126},
+                {name:'最近252个交易日',code:252}
+            ]
+                const industrySortList =[
+                    {name:'排名一',code:1},
+                    {name:'排名二',code:2},
+                    {name:'排名三',code:3}
+                ]
+                const industryTypeList = [
+                    {name:'中信',code:'zx'},
+                    {name:'申万',code:'sw'}
+                ]
+                //code分组
+                const codeListGroup = ref([
+                    {
+                        label: '股票',
+                        children: [
+                            {
+                                label: 'A股',
+                                type: 1,
+                                code: 'ashare_valid'
+                            }, {
+                                label: 'A股(含退市)',
+                                type: 1,
+                                code: 'ashare_with_delist'
+                            }, {
+                                label: '上证A股',
+                                type: 1,
+                                code: 'sh_market'
+                            }, {
+                                label: '深圳A股',
+                                type: 1,
+                                code: 'sz_market'
+                            }, {
+                                label: '北证A股',
+                                type: 1,
+                                code: 'bj_market'
+                            }, {
+                                label: '主板',
+                                type: 1,
+                                code: 'main_board'
+                            }, {
+                                label: '创业板',
+                                type: 1,
+                                code: 'second_board'
+                            }, {
+                                label: '科创板',
+                                type: 1,
+                                code: 'stib_board'
+                            }, {
+                                label: '沪深300成分股',
+                                type: 1,
+                                code: 'is_hs300'
+                            }, {
+                                label: '中证500成分股',
+                                type: 1,
+                                code: 'is_zz500'
+                            }, {
+                                label: '中证800成分股',
+                                type: 1,
+                                code: 'is_zz800'
+                            }, {
+                                label: '中证1000成分股',
+                                type: 1,
+                                code: 'is_zz1000'
+                            },
+
+                        ],
+                    },
+                    {
+                        label: '基金',
+                        children: [
+                            {
+                                label: '全部基金(含到期)',
+                                type: 2,
+                                code: 'fund_code'
+                            }, {
+                                label: '全部基金(只含主代码)',
+                                type: 2,
+                                code: 'fund_valid_main'
+                            }, {
+                                label: '股票型',
+                                type: 2,
+                                code: '股票型'
+                            }, {
+                                label: '偏股型',
+                                type: 2,
+                                code: '偏股型'
+                            }, {
+                                label: '平衡型',
+                                type: 2,
+                                code: '平衡型'
+                            }, {
+                                label: '灵活配置型',
+                                type: 2,
+                                code: '灵活配置型'
+                            }, {
+                                label: '偏债型',
+                                type: 2,
+                                code: '偏债型'
+                            }, {
+                                label: '债券型',
+                                type: 2,
+                                code: '债券型'
+                            }, {
+                                label: 'ETF',
+                                type: 2,
+                                code: 'ETF'
+                            }, {
+                                label: 'ETF联接',
+                                type: 2,
+                                code: 'ETF联接'
+                            }, {
+                                label: '指数型',
+                                type: 2,
+                                code: '指数型'
+                            }, {
+                                label: '指增型',
+                                type: 2,
+                                code: '指增型'
+                            },
+
+                        ],
+                    }, {
+                        label: '中诚信指数',
+                        children: [
+                            {
+                                label: '基金指数',
+                                type: 3,
+                                code: 0
+                            }
+                        ]
+                    }
+                ])
+                //code分组下的数据
+                const codeList = ref([[], [], []])
+                const defaultProps = {
+                    children: 'children',
+                    label: 'label',
+                }
+                const filterNode = (value, data) => {
+                    if (!value) return true
+                    return data.label.includes(value)
+                }
+                // watch(filterText, (val) => {
+                //     codeListRef.value.filter(val)
+                // })
+                //最终选择
+                const endCheck = ref([])
+                const ifCheckChangeCode = ref('')//选中的code
+                const ifCheckChange = ref(true)//选中的code
+                const checkSure = (item) => {
+                    item.check = !item.check
+                }
+                const checkSingle = () => {//单选
+                    endCheck.value = JSON.parse(JSON.stringify(waitCheck.value.filter(item => {
+                        return item.check
+                    }))).concat(endCheck.value)
+
+                    waitCheck.value = waitCheck.value.filter(item => {
+                        return !item.check
+                    })
+                    endCheck.value.forEach(item => {
+                        item.check = false
+                    })
+                    endCheck.value = removeDuplicate(endCheck.value)
+                }
+                const sureCheck = (item, type) => {
+                    item.check = true
+                    if (type == 1) {
+                        endCheck.value.push(item)
+                        waitCheck.value = waitCheck.value.filter(item => {
+                            return !item.check
+                        })
+                        item.check = false
+                    } else {
+                        if (ifCheckChangeCode.value == item.typeParent) {
+                            waitCheck.value.push(item)
+                        }
+                        endCheck.value = endCheck.value.filter(item => {
+                            return !item.check
+                        })
+                        item.check = false
+                    }
+
+                }
+                function removeDuplicate(arr) {
+                    const map = new Map()
+                    const newArr = []
+                    arr.forEach(item => {
+                        delete item.check
+                        const obj = JSON.stringify(item)
+                        if (!map.has(obj)) { // has()用于判断map是否包为item的属性值
+                            map.set(obj, true) // 使用set()将item设置到map中，并设置其属性值为true
+                            newArr.push(item)
+                        }
+                    })
+                    return newArr
+                }
+                const quCheckSingle = () => {//单选
+                    waitCheck.value = JSON.parse(JSON.stringify(endCheck.value.filter(item => {
+                        return item.check && ifCheckChangeCode.value == item.typeParent
+                    }))).concat(waitCheck.value)
+                    waitCheck.value = removeDuplicate(waitCheck.value)
+                    endCheck.value = endCheck.value.filter(item => {
+                        return !item.check
+                    })
+                    waitCheck.value.forEach(item => {
+                        item.check = false
+                    })
+                }
+                const checkall = () => {
+                    endCheck.value = waitCheck.value.concat(endCheck.value)
+                    waitCheck.value = []
+                    endCheck.value = removeDuplicate(endCheck.value)
+                }
+                const quCheckall = () => {
+                    waitCheck.value = waitCheck.value.concat(endCheck.value)
+                    waitCheck.value = waitCheck.value.filter(item => {
+                        return ifCheckChangeCode.value == item.typeParent
+                    })
+                    waitCheck.value = removeDuplicate(waitCheck.value)
+                    endCheck.value = []
+
+                }
+                let selected = ref([]); //被选元素的索引
+                let items = ref([]); //存储所有待选dom
+                let itemsEnd = ref([]); //存储所有结束的dom
+                let push = (dom, index, code, type) => {
+                    nextTick(() => {
+                        if (type == 1) {
+                            items.value[index] = {
+                                selected: false,
+                                dom,
+                                code
+                            }; //记录dom        
+                        } else {
+                            itemsEnd.value[index] = {
+                                selected: false,
+                                dom,
+                                code
+                            }; //记录dom  
+                        }
+                    })
+
+
+                }
+                /*
+                * 初始的原点
+                * */
+                let point = {
+                    /*
+                    * 鼠标起点坐标
+                    * */
+                    start: {
+                        x: 0, y: 0
+                    },
+                    /*
+                    * 鼠标终点坐标
+                    * */
+                    end: {
+                        x: 0, y: 0
+                    },
+                    /*
+                    * 是否正在move
+                    * */
+                    moving: false,
+                    /*
+                    * 获取范围内四个角的坐标
+                    * */
+                    getPosition() {
+                        let angle = []; //角
+                        angle.push(this.start); //起点
+                        angle.push(this.end); //终点
+                        angle.push({
+                            x: this.end.x,
+                            y: this.start.y
+                        }); //对角
+                        angle.push({
+                            x: this.start.x,
+                            y: this.end.y
+                        }); //对角
+                        return angle;
+                    },
+                    /*
+                    * 判断元素是否满足被选中的条件
+                    * */
+                    isSelected(rect) {
+                        let angle = point.getPosition(); //获取四个角的坐标
+                        /*
+                        * 获取指定图形的四个坐标
+                        * */
+                        let rectangle = [
+                            {
+                                x: rect.x,
+                                y: rect.y
+                            },
+                            {
+                                x: rect.x + rect.width,
+                                y: rect.y + rect.height
+                            },
+                            {
+                                x: rect.x + rect.width,
+                                y: rect.y
+                            },
+                            {
+                                x: rect.x,
+                                y: rect.y + rect.height
+                            }
+                        ];
+                        /*
+                        * 满足以下任意一个条件即可
+                        * */
+                        /*
+                        * 互相判断
+                        * */
+                        for (let pos of rectangle) {
+                            if (pos.x > angle[0].x &&
+                                pos.x < angle[1].x &&
+                                pos.y > angle[0].y &&
+                                pos.y < angle[1].y) {
+                                return true;
+                            }
+                        }
+                        /*
+                        * 互相判断
+                        * */
+                        for (let pos of angle) {
+                            if (pos.x > rectangle[0].x &&
+                                pos.x < rectangle[1].x &&
+                                pos.y > rectangle[0].y &&
+                                pos.y < rectangle[1].y) {
+                                return true;
+                            }
+                        }
+                        /*
+                        * 相交检测（横）
+                        * */
+                        if (angle[0].x < rectangle[0].x &&
+                            angle[1].x > rectangle[1].x &&
+                            angle[0].y > rectangle[0].y &&
+                            angle[1].y < rectangle[1].y) {
+                            return true;
+                        }
+                        /*
+                        * 相交检测（竖）
+                        * */
+                        if (angle[0].x > rectangle[0].x &&
+                            angle[1].x < rectangle[1].x &&
+                            angle[0].y < rectangle[0].y &&
+                            angle[1].y > rectangle[1].y) {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+                /*
+                * 鼠标按下
+                * 记录初始点击的位置
+                * */
+                let down = (e) => {
+                    point.start.x = e.x;
+                    point.start.y = e.y;
+                    /*
+                    * 同步选择框的原点
+                    * */
+                    movable.left = e.x + "px";
+                    movable.top = e.y + "px";
+                    point.moving = true; //标记移动开始
+                }
+                let downEnd = (e) => {
+                    point.start.x = e.x;
+                    point.start.y = e.y;
+                    /*
+                    * 同步选择框的原点
+                    * */
+                    movableEnd.left = e.x + "px";
+                    movableEnd.top = e.y + "px";
+                    point.moving = true; //标记移动开始
+                }
+                /*
+                * 鼠标移动
+                * */
+                let move = (e) => {
+                    if (!point.moving) return;
+                    const { x, y } = e; //鼠标位置
+                    /*
+                    * 同步放大元素
+                    * */
+                    if (point.start.y - y < 0) {
+                        movable.height = Math.abs(point.start.y - y) + "px";
+                    } else {
+                        movable.height = Math.abs(point.start.y - y) + "px";
+                        movable.top = y + 'px'
+                    }
+
+                    movable.width = Math.abs(point.start.x - x) + "px";
+                }
+                let moveEnd = (e) => {
+                    if (!point.moving) return;
+                    const { x, y } = e; //鼠标位置
+                    /*
+                    * 同步放大元素
+                    * */
+                    if (point.start.y - y < 0) {
+                        movableEnd.height = Math.abs(point.start.y - y) + "px";
+                    } else {
+                        movableEnd.height = Math.abs(point.start.y - y) + "px";
+                        movableEnd.top = y + 'px'
+                    }
+                    movableEnd.width = Math.abs(point.start.x - x) + "px";
+                }
+                /*
+                * 鼠标抬起
+                * */
+                let up = (e) => {
+                    /*
+                    * 没有移动，直接终止
+                    * */
+                    if (!point.moving) return;
+                    movable.width = 0;
+                    movable.height = 0;
+                    point.end.x = e.x;
+
+                    point.moving = false;
+                    if (point.start.y < e.y) {
+                        point.end.y = e.y;
+                    } else {
+                        point.end.y = point.start.y
+                        point.start.y = e.y
+                    }
+                    /*
+                    * 循环遍历元素是否被选中
+                    * */
+                    selected.value = []; //清空被选的索引
+                    items.value.forEach((item, index) => {
+                        if (item.dom && point.isSelected(item.dom.getBoundingClientRect())) {
+                            selected.value.push(item.code);
+                        }
+                    })
+                    selected.value.forEach(item => {
+                        for (let i = 0; i < waitCheck.value.length; i++) {
+                            const codeObj = waitCheck.value[i];
+                            if (item === codeObj.code) {
+                                codeObj.check = !codeObj.check
+                                break;
+                            }
+                        }
+                    })
+
+
+                    console.log(waitCheck.value);
+                }
+                let upEnd = (e) => {
+                    /*
+                    * 没有移动，直接终止
+                    * */
+                    if (!point.moving) return;
+                    movableEnd.width = 0;
+                    movableEnd.height = 0;
+                    point.end.x = e.x;
+                    point.moving = false;
+                    if (point.start.y < e.y) {
+                        point.end.y = e.y;
+                    } else {
+                        point.end.y = point.start.y
+                        point.start.y = e.y
+                    }
+                    /*
+                    * 循环遍历元素是否被选中
+                    * */
+                    selected.value = []; //清空被选的索引
+                    itemsEnd.value.forEach((item, index) => {
+                        if (item.dom && point.isSelected(item.dom.getBoundingClientRect())) {
+                            selected.value.push(item.code);
+                        }
+                    })
+                    selected.value.forEach(item => {
+                        for (let i = 0; i < endCheck.value.length; i++) {
+                            const codeObj = endCheck.value[i];
+                            if (item === codeObj.code) {
+                                codeObj.check = !codeObj.check
+                                break;
+                            }
+                        }
+                    })
+
+
+                    console.log(itemsEnd.value);
+                    console.log(endCheck.value);
+                }
+                /*
+                * 移动对象的属性
+                * */
+                let movable = reactive({
+                    dom: null,
+                    dom1: null,
+                    top: 0,
+                    left: 0,
+                    width: 0,
+                    height: 0
+                });
+                let movableEnd = reactive({
+                    dom: null,
+                    top: 0,
+                    left: 0,
+                    width: 0,
+                    height: 0
+                });
+
+                //批量选择end
+                const enterCode = () => {
+                    if (!costomCode.value) return
+                    endCheck.value.push(costomCode.value)
+                    costomCode.value = ''
+                }
+                /*end*********************************/
+                /**************函数******************/
+                const checkFunList = ref([])//h函数列表
+                const endCheckFun = ref([])//已选函数列表
+                const dialogVisible = ref(false)
+                const setFunctionArg = ref()
+                const factorList = ref([])
+                const handleNodeClick = (data) => {
+                    if (data.list) return
+                    //这里是做单选的
+                    // if (data.isCheck) {
+                    //     data.isCheck = false
+                    //     endCheckFun.value = endCheckFun.value.filter(item => {
+                    //         return item.code != data.code
+                    //     })
+                    //     return
+                    // }
+                    console.log(data);
+                    if (data.argList && data.argList.length != 0) {
+                        let btn = false
+                        for (let i = 0; i < data.argList.length; i++) {
+                            const item = data.argList[i];
+                            if (item.type == 'factor' || item.type == 'positionType' || item.type == 'scrollNumber' || item.type == 'scrollNumber1' || item.type == 'industryType') {//设置哪些参数需要拦截
+                                btn = true
+                                break
+                            }
+                        }
+                        if (btn) {
+                            setFunctionArg.value = JSON.parse(JSON.stringify(data));
+                            dialogVisible.value = true
+                            return
+                        }
+                    }
+                    if (!data.isCheck) {
+                        data.isCheck = true
+                        endCheckFun.value.push(data)
+                    }
+                }
+                const dialogSure = () => {
+                    setFunctionArg.value.isCheck = true;
+                    endCheckFun.value.push(JSON.parse(JSON.stringify(setFunctionArg.value)))
+                    dialogVisible.value = false
+                }
+                const customNodeClass = (data) => {
+                    if (data.isCheck) {
+                        return 'is-Check'
+                    }
+                    return null
+                }
+                /**************end***************/
+                // 其他选项
+                const otherOptions = reactive({
+                    startTime: '',
+                    endTime: '',
+                    direction: 1,
+                    dataType: 2,
+                    frequency: 1,
+                    dataFormat: 2,
+                    nullValue: 1,
+                    axis: 1,//坐标轴x:时间y:codes
+                    insertPosition: 1,//插入新表还是当前表
+                })
+                const valueFormat = computed(() => {
+                    let str = 'YYYYMMDD'
+                    if (otherOptions.dataFormat == 1) {
+                        str = 'YYYYMMDD'
+                    } else if (otherOptions.dataFormat == 2) {
+                        str = 'YYYY/MM/DD'
+                    } else if (otherOptions.dataFormat == 3) {//Excel不支持这种格式
+                        str = 'YYYY-MM-DD'
+                    }
+                    return str
+                })
+                const submit = async () => {
+                    //timeAnge!otherOptions.startTime || !otherOptions.endTim
+                    if (!timeAnge.value) {
+                        return ElMessage.error('请输入时间')
+                    }
+                    otherOptions.startTime = timeAnge.value[0]
+                    otherOptions.endTime = timeAnge.value[1]
+                    console.log(timeAnge.value);
+                    console.log(otherOptions);
+                    // const codeList = endCheck.value.map(item => item.code)
+                    const codeList = endCheck.value
+                    const obj = {
+                        funCodeList: endCheckFun.value,//选择的函数
+                        codeList,//选择的股票编码信息
+                        otherOptions
+                    }
+                    console.log(obj);
+                    if (excAddrValueIsNull.value || isUpdateFun.value) {
+                        Office.context.ui.messageParent(JSON.stringify(obj))
+                        return
+                    }
+                    ElMessageBox.confirm(
+                        '插入地址非空，确定插入后不可撤销，是否继续',
+                        '警告',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '重新选择插入地址',
+                            type: 'warning',
+                        }
+                    )
+                        .then(async () => {
+                            Office.context.ui.messageParent(JSON.stringify(obj))
+                        })
+                        .catch(() => {
+                            Office.context.ui.messageParent('againGetAddr')
+                        })
+
+                }
+                const cancel = () => {
+                    Office.context.ui.messageParent('close')
+                }
+                /**end*/
+                const disabledDate = (time) => {
+                    return time.getTime() > Date.now()
+                }
+                //删除已选函数
+                const deleteFun = (row) => {
+                    row.isCheck = false;
+                    for (let i = 0; i < endCheckFun.value.length; i++) {
+                        const item = endCheckFun.value[i];
+                        if (item.code == row.code && JSON.stringify(item.argList) == JSON.stringify(row.argList)) {
+                            endCheckFun.value.splice(i, i + 1)
+                            break;
+                        }
+                    }
+                }
+                //获取区域
+                const getAddrBtn = ref(true);
+                const getAddrBtn1 = ref(true);
+                const addrValues = ref('')
+                const addrValues1 = ref('')
+                const addrValuesList = ref([])
+                const getAddr = async (index) => {
+                    if (index == 1) {
+                        if (!getAddrBtn1.value) {
+                            Office.context.ui.messageParent('startEnd');//向主页面里发送数据 
+                            getAddrBtn1.value = true
+                        }
+                        getAddrBtn.value = false
+                        setTimeout(() => {
+                            Office.context.ui.messageParent('start');//向主页面里发送数据                            
+                        }, 500)
+                    } else if (index == 2) {
+                        Office.context.ui.messageParent('stop');//向主页面里发送数据 
+                        getAddrBtn.value = true
+                    } else if (index == 3) {
+                        if (!getAddrBtn.value) {
+                            Office.context.ui.messageParent('stop');//向主页面里发送数据 
+                            getAddrBtn.value = true
+                        }
+                        getAddrBtn1.value = false
+                        setTimeout(() => {
+                            Office.context.ui.messageParent('startEnd');//向主页面里发送数据 
+                        }, 500)
+
+                    } else if (index == 4) {
+                        Office.context.ui.messageParent('stopEnd');//向主页面里发送数据 
+                        getAddrBtn1.value = true
+                    }
+
+                    console.log('111');
+                }
+                const allCodesList = ref([])
+                const allCodesListFilter = ref([])
+                let timer = null
+                const filterMethod = (str) => {
+                    //节流
+                    if (timer) {
+                        clearTimeout(timer)
+                    }
+                    timer = setTimeout(() => {
+                        allCodesListFilter.value = allCodesList.value.filter((item) => {
+                            return item.code.includes(str) || item.name.includes(str)
+                        })
+                    }, 500)
+
+                }
+                /**
+                 * @description: 设置N天N月N年
+                 * @param {number} type 类型，年1，月2，日3
+                 * @param {number} num 天数，月数，年数
+                 * @return {Date}
+                 */
+                const setTimeShortcuts = (type, num) => {
+                    const date = new Date()
+                    const year = date.getFullYear()
+                    const month = date.getMonth()
+                    const day = date.getDate()
+                    if (type == 1) {//年
+                        date.setFullYear(year - num)
+                        date.setDate(day + 1)
+                    } else if (type == 2) {
+                        date.setMonth(month - num)
+                        date.setDate(day + 1)
+                    } else {
+                        date.setDate(day - num - 1)
+                    }
+                    return date
+                }
+                const shortcuts = [
+                    {
+                        text: '最近一个周',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(3, 7 - 2)
+                            return [start, end]
+                        },
+                    },
+                    {
+                        text: '最近一个月',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(2, 1)
+                            return [start, end]
+                        },
+                    },
+                    {
+                        text: '最近三个月',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(2, 3)
+                            return [start, end]
+                        },
+                    },
+                    {
+                        text: '最近六个月',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(2, 6)
+                            return [start, end]
+                        },
+                    },
+                    {
+                        text: '最近九个月',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(2, 9)
+                            return [start, end]
+                        },
+                    },
+                    {
+                        text: '最近一年',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(1, 1)
+                            return [start, end]
+                        },
+                    },
+                    {
+                        text: '最近三年',
+                        value: () => {
+                            const end = new Date()
+                            const start = setTimeShortcuts(1, 3)
+                            return [start, end]
+                        },
+                    },
+                ]
+                onMounted(() => {
+                    //判断是否读取内存数据
+                    const params = location.search;
+                    let isFirst;
+                    if (params.includes('isFirst')) {
+                        isFirst = true;
+                        const sharesList = localStorage.getItem('sharesList')
+                        const fundList = localStorage.getItem('fundList')
+                        const indexList = localStorage.getItem('indexList')
+                        codeList.value[0] = JSON.parse(sharesList)
+                        codeList.value[1] = JSON.parse(fundList)
+                        codeList.value[2] = JSON.parse(indexList)
+                        setTimeout(() => {
+                            allCodesList.value = [...codeList.value[0], ...codeList.value[1], ...codeList.value[2]]
+                            allCodesListFilter.value = allCodesList.value.slice(0, 100)
+                            console.log(allCodesList.value);
+                        }, 1000)
+
+                        if (params.includes('type=update')) {
+                            loading.value = true
+                        }
+                    } else {
+                        loading.value = true
+                    }
+                    //获取函数列表
+                    axios.get('/assets/js/fun_list.json').then(res => {
+                        res.data.forEach(item => {
+                            item.list = item.list.filter(child => {
+                                return !child.isSpecial
+                            })
+                        })
+                        checkFunList.value = res.data
+                    })
+                    //获取因子列表
+                    axios.get('/assets/js/factor_code.json').then(res => {
+                        factorList.value = res.data
+                    })
+                    try {
+                        Office.onReady(() => {
+                            //接收主页面过来的数据
+                            Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, function (arg) {
+                                console.log('我是子组件', arg);
+                                const data = JSON.parse(arg.message)
+                                const { type, list } = data
+                                if (!isFirst) {
+                                    const { sharesList, fundList, indexList } = list
+                                    if (type == 1) {//设置股票列表
+                                        codeList.value[0] = sharesList
+                                        localStorage.setItem('sharesList', JSON.stringify(sharesList))
+                                        codeList.value[1] = fundList
+                                        localStorage.setItem('fundList', JSON.stringify(fundList))
+                                        codeList.value[2] = indexList
+                                        localStorage.setItem('indexList', JSON.stringify(indexList))
+                                    }
+                                }
+                                if (type == 3) {//区域地址
+                                    addrValues.value = data.value
+                                } else if (type == 4) {//区域地址值
+                                    const values = data.value;
+                                    for (let i = 0; i < values.length; i++) {
+                                        const item = values[i];
+                                        for (let j = 0; j < item.length; j++) {
+                                            const child = item[j];
+                                            addrValuesList.value.push({ code: child, name: '--' })
+                                        }
+                                    }
+                                    addrValuesList.value = addrValuesList.value.filter(item => {
+                                        return item
+                                    })
+                                    if (addrValuesList.value.length != 0) {
+                                        endCheck.value = endCheck.value.concat(addrValuesList.value)
+                                    }
+                                } else if (type == 5) {
+                                    addrValues1.value = data.value
+                                } else if (type == 6) {//插入地址是否是空值
+                                    excAddrValueIsNull.value = data.value
+                                } else if (type == 7) {//函数编辑
+                                    isUpdateFun.value = true
+                                    const { codesList, code, functionArg, timer, nullValue, axis } = list;
+                                    let btn = true
+                                    codeList.value[0].map(itemA => {
+                                        codesList.map(itemB => {
+                                            if (itemA.code == itemB) {
+                                                endCheck.value.push(itemA)
+                                                if (btn) {
+                                                    checkType.value = ['股票函数']
+                                                    btn = false
+                                                }
+                                            }
+                                        })
+                                    })
+                                    if (endCheck.value.length == 0) {
+                                        codeList.value[1].filter(itemA => {
+                                            codesList.map(itemB => {
+                                                if (itemA.code == itemB) {
+                                                    endCheck.value.push(itemA)
+                                                    if (btn) {
+                                                        checkType.value = ['基金函数']
+                                                        btn = false
+                                                    }
+                                                }
+                                            })
+                                        })
+                                    }
+                                    if (endCheck.value.length == 0) {
+                                        codeList.value[2].filter(itemA => {
+                                            codesList.map(itemB => {
+                                                if (itemA.code == itemB) {
+                                                    endCheck.value.push(itemA)
+                                                    if (btn) {
+                                                        checkType.value = ['中诚信指数函数']
+                                                        btn = false
+                                                    }
+                                                }
+                                            })
+                                        })
+                                    }
+                                    let endCheckFun8;
+                                    console.log(checkFunList.value);
+                                    endCheckFun8 = checkFunList.value[0].list.find(item => code.toLowerCase().includes(item.code))
+                                    if (!endCheckFun8) {
+                                        endCheckFun8 = checkFunList.value[1].list.find(item => code.toLowerCase().includes(item.code))
+                                    }
+                                    if (!endCheckFun8) {
+                                        endCheckFun8 = checkFunList.value[2].list.find(item => code.toLowerCase().includes(item.code))
+                                    }
+
+                                    if (functionArg) {
+                                        endCheckFun8.argList[2].arg = functionArg
+                                    }
+                                    console.log(functionArg);
+                                    endCheckFun.value.push(endCheckFun8)
+                                    timeAnge.value = [timer[0], timer[1]]
+                                    // otherOptions.startTime = timer[0]
+                                    // otherOptions.endTime = timer[1]
+                                    otherOptions.dataType = Number(timer[2])
+                                    otherOptions.frequency = Number(timer[3])
+                                    otherOptions.dataFormat = Number(timer[4])
+                                    otherOptions.nullValue = Number(nullValue)
+                                    otherOptions.axis = Number(axis)
+                                    loading.value = false
+                                }
+                            });
+                            if (isFirst) return
+                            const timer = setInterval(() => {
+                                if (codeList.value[0].length && codeList.value[1].length && codeList.value[2].length) {
+                                    loading.value = false
+                                    clearInterval(timer)
+                                    setTimeout(() => {
+                                        allCodesList.value = [...codeList.value[0], ...codeList.value[1], ...codeList.value[2]]
+                                        allCodesListFilter.value = allCodesList.value.slice(0, 10)
+                                    }, 1000)
+
+                                }
+                                console.log(loading.value);
+                            }, 1000)
+                        })
+                    } catch (error) {
+                        console.log(error);
+                        console.log('资源加载失败！');
+                        ElMessage.error('资源加载失败，正在重新加载，请耐心等候...')
+                        setTimeout(()=>{
+                            window.location.reload()
+                        },2000)
+                    }
+                })
+                return {
+                    step,
+                    filterText,
+                    waitCheck,
+                    handleCheckChange,
+                    codeListGroup,
+                    defaultProps,
+                    codeListRef,
+                    filterNode,
+                    endCheck,
+                    checkSingle,
+                    checkall,
+                    quCheckall,
+                    quCheckSingle,
+                    checkSure,
+                    costomCode,
+                    enterCode,
+                    checkFunList,
+                    handleNodeClick,
+                    endCheckFun,
+                    customNodeClass,
+                    dialogVisible,
+                    setFunctionArg,
+                    factorList,
+                    dialogSure,
+                    submit,
+                    disabledDate,
+                    cancel,
+                    loading,
+                    deleteFun,
+                    daor,
+                    getAddr,
+                    getAddrBtn,
+                    getAddrBtn1,
+                    addrValues,
+                    addrValues1,
+                    addrValuesList,
+                    otherOptions,
+                    valueFormat,
+                    positionTypeLlst,
+                    allCodesList,
+                    filterMethod,
+                    allCodesListFilter,
+                    selected,
+                    items,
+                    push,
+                    point,
+                    down,
+                    move,
+                    up,
+                    downEnd,
+                    moveEnd,
+                    upEnd,
+                    movable,
+                    movableEnd,
+                    ifCheckChange,
+                    sureCheck,
+                    checkType,
+                    timeAnge,
+                    shortcuts,
+                    ScrollNumberList,
+                    ScrollNumberList1,
+                    industrySortList,
+                    industryTypeList  
+                }
+            }
+        })
+        app.use(ElementPlus, {
+            locale: ElementPlusLocaleZhCn,
+        })
+        app.mount('#data')
+    </script>
+</body>
+
+</html>

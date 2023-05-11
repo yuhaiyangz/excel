@@ -1,0 +1,605 @@
+<!--
+ * @Author: yuhaiyangz@163.com
+ * @Date: 2022-08-26 11:19:02
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2023-04-03 17:31:46
+ * @Description: 函数搜索页面
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- webpackIgnore: true -->
+    <!-- <script type="text/javascript" src="/assets/js/office.js"></script> -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/axios.min.js"></script>
+    <!-- webpackIgnore: true -->
+    <link rel="stylesheet" href="/assets/js/element-ui.css" />
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/vue.global.js"></script>
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/element.ui.full.js"></script>
+    <title>函数搜索页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        html,
+        body {
+            background-color: #eee;
+            height: 100%;
+        }
+
+        #app {
+            height: 100%;
+        }
+
+        #app>div {
+            height: 100%;
+        }
+
+        .box {
+            padding: 5px;
+            height: 100%;
+        }
+
+        .title {
+            font-size: 16px;
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .display {
+            display: flex;
+        }
+
+        .box .display {
+            height: calc(100% - 31px);
+        }
+
+        .display .left {
+            width: 30%;
+            background-color: #fff;
+            padding: 5px;
+            overflow-y: auto;
+        }
+
+        .display .left li {
+            line-height: 20px;
+            cursor: pointer;
+        }
+
+        .display .left li .active {
+            color: #008BCF
+        }
+
+        .display .left li li:hover {
+            color: #008BCF
+        }
+
+        .display .right {
+            width: 70%;
+            padding: 0 5px;
+        }
+
+        .display .right .search {
+            display: flex;
+            align-items: center;
+        }
+
+        .display .right .search p {
+            width: 100px;
+            text-align: right;
+        }
+
+        .explain {
+            height: 35%;
+        }
+
+        .explain h3 {
+            line-height: 30px;
+        }
+
+        .explain .explainList {
+            border: 1px solid #c0c0c0;
+            border-radius: 5px;
+            padding: 5px;
+            height: calc(100% - 30px);
+            overflow-y: auto;
+        }
+
+        .explain .explainList h4 {
+            line-height:1.6;
+        }
+
+        .explain .explainList p {
+            line-height: 1.6;
+            text-indent: 2em;
+        }
+
+        .btn {
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .function {
+            padding: 5px;
+            height: 100%;
+        }
+
+        .function .fun_title {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .function .fun_title p {
+            width: 100px;
+            text-align: right;
+        }
+
+        .function .fun_arg {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .function .fun_arg li {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .function .fun_arg li p {
+            width: 100px;
+            text-align: right;
+            margin-right: 10px;
+        }
+
+        .function .fun_arg li img {
+            margin-left: 10px;
+            cursor: pointer;
+            height: 16px;
+        }
+
+        .function .fun_arg li span {
+            cursor: pointer;
+        }
+
+        .tableRow {
+            cursor: pointer;
+        }
+        a{
+            text-decoration: none;
+            color:#008BCF
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div v-loading="loading">
+            <div class="box" v-if="funShow">
+                <h1 class="title">函数搜索</h1>
+                <div class="display">
+                    <div class="left">
+                        <ul>
+                            <li v-for="item in funList">
+                                <h3>{{item.name}}</h3>
+                                <ul style="margin-left:10px">
+                                    <li :class="{'active':child.state}" @click="checkFun(child)"
+                                        @dblclick="rowDbClick(child)" v-for="child in item.list">
+                                        {{child.name}}</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="right">
+                        <div class="search">
+                            <p>函数搜索：</p>
+                            <el-input v-model="funSearch" type="text" placeholder="支持函数名称、指标中文名称和拼音查找" size="small">
+                            </el-input>
+                            <el-button style="margin-left: 5px" size="small" type="primary" @click="searchFun()">查找
+                            </el-button>
+                        </div>
+                        <el-table :data="checkFunList"
+                            style="width: 100%;margin-top: 10px;--el-table-header-bg-color:#cccccc;--el-table-header-text-color: #000;height:calc( 65% - 68px )"
+                            size="small" border @row-click="rowClick" @row-dblclick="rowDbClick"
+                            :row-class-name="'tableRow'" highlight-current-row>
+                            <el-table-column prop="name" label="函数名"></el-table-column>
+                            <el-table-column prop="code" label="函数表达式"></el-table-column>
+                        </el-table>
+                        <div class="explain" v-if="funObj">
+                            <h3>函数说明</h3>
+                            <div class="explainList" v-html="funObj.des"></div>
+                        </div>
+                        <div class="btn">
+                            <el-button size="small" @click="closeDialog(1)">关闭</el-button>
+                            <el-button type="primary" size="small" @click="sureCheckFun()">下一步</el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="function" v-else>
+                <h3>{{funObj.name}}</h3>
+                <div class="fun_title">
+                    <p>公式：</p>
+                    <el-input v-model="funFormula" placeholder="公式名称" size="small"></el-input>
+                </div>
+                <el-divider></el-divider>
+                <ul class="fun_arg">
+                    <li v-for="(item,index) in funObj.argList">
+                        <p>{{item.label}}</p>
+                        <el-select v-if="item.type == 'factor'" v-model="item.arg" placeholder="请选择因子" size="small"
+                            style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="itemChild in factorList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-select v-else-if="item.type == 'positionType'" v-model="item.arg" placeholder="请选择"
+                            size="small" style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="itemChild in positionTypeLlst" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-select v-else-if="item.type == 'IndexType'" v-model="item.arg" placeholder="请选择"
+                            size="small" style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="(itemChild,index) in IndexTypeList" :key="itemChild.code" :label="itemChild.name" :disabled="index>2"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-select v-else-if="item.type == 'scrollNumber'" v-model="item.arg" placeholder="请选择"
+                            size="small" style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="(itemChild,index) in ScrollNumberList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code" :disabled="itemChild.code === 1 && funObj.code == 'ccx_fund_dur_label'">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-select v-else-if="item.type == 'scrollNumber1'" v-model="item.arg" placeholder="请选择"
+                            size="small" style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="(itemChild,index) in ScrollNumberList1" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-select v-else-if="item.type == 'industrySort'" v-model="item.arg" placeholder="请选择"
+                            size="small" style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="(itemChild,index) in industrySortList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-select v-else-if="item.type == 'industryType'" v-model="item.arg" placeholder="请选择"
+                            size="small" style="width:calc( 100% - 110px );" @change="selectChange(index,item.arg)">
+                            <el-option v-for="(itemChild,index) in industryTypeList" :key="itemChild.code" :label="itemChild.name"
+                                :value="itemChild.code">
+                                <span style="float: left">{{ itemChild.code }}</span>
+                                <span style="float: right;">{{ itemChild.name }}</span>
+                            </el-option>
+                        </el-select>
+                        <el-input v-input v-else v-model="item.arg" :placeholder="item.label" size="small"
+                            style="width:calc( 100% - 110px );" :formatter="formatterInput" :parser="parserInput">
+                        </el-input>
+                        <img v-if="!item.state" src="/assets/check.png" alt="" @click="checkCell(item,index)">
+                        <img src="/assets/sure.png" v-else @click="checkCell(item)" alt="">
+                    </li>
+                </ul>
+                <el-divider></el-divider>
+                <div class="explain" v-if="funObj">
+                    <h3>函数说明</h3>
+                    <div class="explainList" v-html="funObj.des"></div>
+                </div>
+                <div class="btn">
+                    <el-button size="small" @click="funShow=true">上一步</el-button>
+                    <el-button type="primary" size="small" @click="closeDialog(2)">确定</el-button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+<script>
+    //industry行业 factor因子
+    const { createApp, ref, onMounted, computed } = Vue;
+    const { ElMessage, ElMessageBox } = ElementPlus
+    const app = createApp({
+        setup() {
+            const funShow = ref(true);
+            const checkFunList = ref([])
+            const fun_code = ref(`=ccxd.add("","")`);
+            const funList = ref([])
+            const loading = ref(true)
+            const excAddrValueIsNull = ref(true)//插入的地址是否是空值
+            const checkFun = (row) => {
+                funList.value.forEach(item => {
+                    item.list.forEach(child => {
+                        child.state = false
+                    })
+                });
+                row.state = true
+                if (row.state) {
+                    checkFunList.value = [];
+                    checkFunList.value[0] = row;
+                    funObj.value = row
+                }
+            }
+            //点击选取单元格
+            const checkCell = (item, index) => {
+                funObj.value.argList.forEach(each => {
+                    if (each.label != item.label) {
+                        each.state = false
+                    }
+                })
+                try {
+                    Office.context.ui.messageParent('stop');
+                } catch (error) {
+                    console.log(error);
+                }
+                item.state = !item.state
+                console.log(funObj.value.argList);
+                if (item.state) {
+                    argIndex.value = index;
+                    try {
+                        Office.context.ui.messageParent('start');//向主页面里发送数据
+                    } catch (error) {
+                        console.log(error);
+                    }
+                } else {
+                    try {
+                        Office.context.ui.messageParent('stop');
+                    } catch (error) {
+                        console.log(error);
+                    }
+                }
+
+            }
+            //选择函数
+            const funObj = ref()
+            const rowClick = (row) => {
+                funObj.value = row
+            }
+            const rowDbClick = (row) => {
+                funObj.value = row
+                funShow.value = false
+            }
+            //函数公式
+            const funFormula = computed(() => {
+                let arg = ''
+                funObj.value?.argList.forEach((item, index) => {
+                    if (index == funObj.value.argList.length - 1) {
+                        arg += item.arg ? `${item.arg}` : `""`
+                    } else {
+                        arg += item.arg ? `${item.arg},` : `"",`
+                    }
+                })
+
+                return `=CCX.${funObj.value.code.toUpperCase()}(${arg})`
+            })
+            const argIndex = ref()//点击哪个参数
+            const factorList = ref([])//因子列表
+            const industryList = ref([])//因子列表
+            const positionTypeLlst = [
+                { name: '基金风格标签（全持仓）', code: 'detail' },
+                { name: '基金风格标签（重仓股）', code: 'key' },
+            ]
+            const IndexTypeList = [
+                { name: '基金指数', code: 'index_basic' },
+                { name: '股票指数', code: 'index_basic' },
+                { name: '债券指数', code: 'index_basic' },
+            ]
+            const ScrollNumberList = [
+                {name:'1期',code:1},
+                {name:'2期',code:2},
+                {name:'4期',code:4},
+                {name:'6期',code:6}
+            ]
+            const ScrollNumberList1 = [
+                {name:'最近63个交易日',code:63},
+                {name:'最近126个交易日',code:126},
+                {name:'最近252个交易日',code:252}
+            ]
+            const industrySortList =[
+                {name:'排名一',code:1},
+                {name:'排名二',code:2},
+                {name:'排名三',code:3}
+            ]
+            const industryTypeList = [
+                {name:'中信',code:'zx'},
+                {name:'申万',code:'sw'}
+            ]
+            onMounted(() => {
+                try {
+                    Office.onReady(() => {
+                        loading.value = false
+                        try {
+                            //接收主页面过来的数据
+                            Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, function (arg) {
+                                console.log('我是子组件', arg);//Sheet1!C12
+                                const data = JSON.parse(arg.message)
+                                const { type, value } = data
+                                // excAddrValueIsNull
+                                if (type == 2) {
+                                    funObj.value.argList[argIndex.value].arg = value.split('!')[1]
+                                } else {
+                                    excAddrValueIsNull.value = value
+                                }
+
+                            });
+                        } catch (error) {
+                            console.log(error);
+                        }
+                        axios.get('/assets/js/factor_code.json').then(res => {
+                            factorList.value = res.data
+                        })
+                        axios.get('/assets/js/industry_code.json').then(res => {
+                            industryList.value = res.data
+                        })
+                        axios.get('/assets/js/fun_list.json').then(res => {
+                            funList.value = res.data;
+                            //获取URL信息
+                            const url = window.location.href;
+                            const params = url.split('?')[1]
+                            if (!params) return
+                            const objArr = params.split('&')
+                            const obj = {}
+                            objArr.forEach(item => {
+                                const a = item.split('=')
+                                obj[a[0]] = a[1]
+                            })
+                            console.log(obj);
+                            if (obj.searchText && !obj.code) {
+                                funSearch.value = decodeURIComponent(obj.searchText)
+                                searchFun()
+                                return
+                            }
+                            if (obj.code) {
+                                funList.value.forEach(item => {
+                                    item.list.forEach(child => {
+                                        if (child.code == obj.code) {
+                                            funObj.value = child
+                                            funShow.value = false
+                                        }
+                                    })
+                                })
+                            }
+                        })
+                    });
+                } catch (error) {
+                    console.log(error);
+                    console.log('资源加载失败！');
+                    ElMessage.error('资源加载失败，正在重新加载，请耐心等候...')
+                    setTimeout(()=>{
+                        window.location.reload()
+                    },2000)
+                }
+
+            })
+            const closeDialog = async (type) => {//type 1 直接关闭 2 关闭并复制fun到单元格
+                if (type === 1) {
+                    Office.context.ui.messageParent('end');
+                } else {
+                    const obj = {
+                        type: 'close',
+                        code: funFormula.value
+                    }
+                    console.log(obj);
+                    if (excAddrValueIsNull.value) {
+                        Office.context.ui.messageParent(JSON.stringify(obj))
+                        return
+                    }
+                    ElMessageBox.confirm(
+                        '插入地址非空，确定插入后不可撤销，是否继续',
+                        '警告',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '重新选择插入地址',
+                            type: 'warning',
+                        }
+                    )
+                        .then(() => {
+                            Office.context.ui.messageParent(JSON.stringify(obj))
+                        })
+                        .catch(() => {
+                            Office.context.ui.messageParent('againGetAddr')
+                        })
+                }
+
+            }
+            //函数搜索
+            const funSearch = ref('')
+            const searchFun = () => {
+                checkFunList.value = []
+                funList.value.forEach(item => {
+                    item.list.forEach(child => {
+                        if (child.name.includes(funSearch.value)) {
+                            checkFunList.value.push(child)
+                        }
+                    })
+                })
+            }
+            const sureCheckFun = () => {//确定跳转下一步
+                if (funObj.value) {
+                    funShow.value = false
+                } else {
+                    console.log('请先选择一个函数');
+                }
+            }
+            //格式化
+            const formatterInput = value => {
+                return `"${value}"`
+            }
+            const parserInput = value => {
+                return value.replace(/\"\s?|(,*)\"/g, '')
+            }
+            const selectChange = (index, val) => {
+                funObj.value.argList[index].arg = `"${val}"`
+            }
+            return {
+                funShow,
+                checkFunList,
+                fun_code,
+                funList,
+                checkFun,
+                checkCell,
+                rowClick,
+                funObj,
+                funFormula,
+                closeDialog,
+                factorList,
+                industryList,
+                funSearch,
+                searchFun,
+                sureCheckFun,
+                rowDbClick,
+                loading,
+                formatterInput,
+                parserInput,
+                selectChange,
+                positionTypeLlst,
+                IndexTypeList,
+                ScrollNumberList,
+                ScrollNumberList1,
+                industrySortList,
+                industryTypeList
+            }
+        }
+    })
+    app.use(ElementPlus)
+    app.directive('input', {
+        mounted: (el) => {
+            console.log(el);
+            const id = el.querySelector('.el-input__inner')
+            id.addEventListener('input', function (e) {
+                e.preventDefault();
+                var val = this.value,
+                    len = val.length;
+                setTimeout(function () {
+                    id.setSelectionRange(len - 1, len - 1);
+                }, 0);
+            });
+        }
+    })
+    app.mount('#app')
+</script>
+
+</html>

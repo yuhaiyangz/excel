@@ -1,0 +1,215 @@
+[
+    {
+        "name": "股票函数", "list": [
+            {
+                "name": "因子暴露表", "code": "ccx_stock_exposure", "des": "<p>记录个股对各风格因子和行业因子的暴露值，即股票在各个风格因子和行业因子上的取值,其中行业因子为 0-1 变量，1 为该个股属于该行业分类，0 为不属于该行业。</p><p>风格因子暴露的计算的详细规则请见：<a target='blank' href='https://www.ccxindices.com/'>《中诚信股票风险模型说明文档》</a>。</p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "因子名称", "arg": "", "type": "factor" }
+                ]
+            },
+            {
+                "name": "因子收益表", "code": "ccx_stock_factor_return","isSpecial":true, "des": "<p>记录各风格因子和行业因子的日收益率</p><p>风格因子收益的计算的详细规则请见：<a target='blank' href='https://www.ccxindices.com/'>《中诚信股票风险模型说明文档》</a>。</p>", "argList": [
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "因子名称", "arg": "", "type": "factor" }
+                ]
+            },
+            {
+                "name": "特质收益表", "code": "ccx_stock_specific_return", "des": "<p>个股的特质收益率，即股票收益的残差部分，代表着股票收益不能被风格因子和行业因子解释的部分。</p><p>详细规则请见：<a target='blank' href='https://www.ccxindices.com/'>《中诚信股票风险模型说明文档》</a>。</p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },
+            {
+                "name": "风险因子协方差矩阵表", "code": "ccx_stock_factor_covariance","isSpecial":true, "des": "<p>记录各风格因子和行业因子之间的协方差;</p><p>计算的详细规则请见：<a target='blank' href='https://www.ccxindices.com/'>《中诚信股票风险模型说明文档》</a>。</p>", "argList": [
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "因子名称1", "arg": "", "type": "factor" },
+                    { "label": "因子名称2", "arg": "", "type": "factor" }
+                ]
+            },
+            {
+                "name": "特质风险表", "code": "ccx_stock_specific_risk", "des": "<p>个股的特质风险，即股票特质收益率的波动。</p><p>详细规则请见：<a target='blank' href='https://www.ccxindices.com/'>《中诚信股票风险模型说明文档》</a>。</p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },
+            {
+                "name": "股票风格标签", "code": "ccx_stock_style_vg", "des": "<p>股票风格的确认是在股票规模分类的基础上，对于大盘、中盘和小盘股，分别衡量其中各股票的价值得分和成长得分，将股票的成长得分OGS减去价值得分OVS，得到股票的成长-价值得分GMV(Growth-Minus-Value)。在股票规模分类基础上，分别确定大盘股、中盘股、小盘股的价值阈值和成长阈值，使得在上述每一类规模分类中，价值型、混合型、成长股票的流通市值合计占该规模分类股票总市值的三分之一。</p><p>1）成长型：股票的GMV得分>=其所在规模分类的成长风格阈值；</p><p>2）平衡型：其所在规模分类的价值风格阈值<股票的GMV得分<其所在规模分类的成长风格阈值；</p><p>3）价值型：股票的GMV得分<=其所在规模分类的价值风格阈值。</p><p>详细规则请见<a target='blank' href='https://www.ccxindices.com/'>《中诚信基金投资风格箱说明文档》</a></p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },
+            {
+                "name": "股票市值标签", "code": "ccx_stock_style_cap", "des": "<p>根据股票总市值的规模将其规模划分为大盘、中盘和小盘三类。具体划分标准：将股票按照其总市值进行降序排列，计算各股票对应的累计市值占全部股票累计总市值的百分比Cum_Ratio,且0<Cum_Ratio<=100%;</p> <p>1）大盘股：累计市值百分比小于或等于70%的股票，即满足Cum_Ratio <=70%；</p><p>2）中盘股：累计市值百分比在70-90%之间的股票，即满足70% < Cum_Ratio <= 90%；</p><p>3）小盘股：累计市值百分比大于90%的股票，即满足Cum_Ratio > 90%。</p><p>详细规则请见<a target='blank' href='https://www.ccxindices.com/'>《中诚信基金投资风格箱说明文档》</a></p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },
+            {
+                "name": "股票成长价值风格得分", "code": "ccx_stock_style_score_vg", "des": "<p>股票成长价值风格得分</p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },
+            {
+                "name": "股票市值风格得分", "code": "ccx_stock_style_score_cap", "des": "<p>股票市值风格得分</p>", "argList": [
+                    { "label": "股票代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "基金函数", "list": [
+            {
+                "name": "基金类型", "code": "ccx_fund_type", "des": "<p>中诚信基金分类在证监会所规定的基金分类标准的基础上，综合考虑基金的持仓数据，对基金分类进行完善和细分，一级分类包括：股票型、混合型、债券型等。</p><p>详细分类及规则请见：<a target='blank' href='https://www.ccxindices.com/'>《中诚信公募基金分类说明》</a>。</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },
+            {
+                "name": "基金风格标签", "code": "ccx_fund_style_vg", "des": "<p>基金投资风格即中诚信基金风格箱中的风格属性，首先将A股市场股票根据市值数据和成长价值因子数据划分股票为成长、平衡和价值，由于风格和规模存在相关性，所以在确认风格属性时，也要考虑股票市值的影响，然后以基金持有的股票市值为基础，把基金投资股票的成长价值风格定义为成长型、平衡型和价值型。</p><p>详细规则请见<a target='blank' href='https://www.ccxindices.com/'>《中诚信基金投资风格箱说明文档》</a></p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "持仓类型", "arg": "", "type": "positionType" }
+                ]
+            },
+            {
+                "name": "基金市值标签", "code": "ccx_fund_style_cap", "des": "<p>基金投资市值即中诚信基金风格箱中的市值属性，首先将A股市场股票根据市值数据划分股票为大盘股、中盘股和小盘股，然后以基金持有的股票市值为基础，把基金投资股票的市值风格定义为大盘、中盘和小盘。</p><p>详细规则请见<a target='blank' href='https://www.ccxindices.com/'>《中诚信基金投资风格箱说明文档》</a></p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "持仓类型", "arg": "", "type": "positionType" }
+                ]
+            },
+            {
+                "name": "基金风格因子暴露", "code": "ccx_fund_exposure_style", "des": "<p>基金风格因子暴露是根据中诚信股票风险模型，使用股票风格因子暴露数据以及基金定报披露的持仓股票比例加权计算得到基金的风格因子暴露。</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "风格因子", "arg": "", "type": "factor" }
+                ]
+            },
+            {
+                "name": "基金市值风格得分", "code": "ccx_fund_style_score_cap", "des": "<p>基金市值风格得分</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "持仓类型", "arg": "", "type": "positionType" }
+                ]
+            },{
+                "name": "基金成长价值风格得分", "code": "ccx_fund_style_score_vg", "des": "<p>基金成长价值风格得分</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "持仓类型", "arg": "", "type": "positionType" }
+                ]
+            },{
+                "name": "基金久期", "code": "ccx_fund_dur", "des": "<p>金久期基金久期指的是基金持有债券组合的久期，根据基金半年报及年报中披露的利率风险敏感分析数据和久期凸度计算公式以及债券投资占比计算得到单期久期，然后求最近若干期的久期平均值</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "滚动期数", "arg": "", "type": "scrollNumber" }
+                ]
+            },{
+                "name": "基金久期标签", "code": "ccx_fund_dur_label", "des": "<p>基金久期标签是基金持有债券组合的久期标签，根据滚动最近4期的基金久期和久期标准差确定久期标签：</p><p>短久期： 久期均值≤1并且标准差≤1；</p> <p>中久期：1<久期均值≤3并且标准差≤1.5;</p><p>长久期：久期均值>3并且标准差≤1.5;</p> <p>灵活久期:不属于以上三种情况的久期(标准差过大导致)</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "滚动期数", "arg": "", "type": "scrollNumber" }
+                ]
+            },{
+                "name": "基金持有的第N大行业名称", "code": "ccx_fund_hold_top_industry_name", "des": "<p>基金滚动最近若干期持有的第N大行业的名称</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "滚动期数", "arg": "", "type": "scrollNumber" },
+                    { "label": "行业排名", "arg": "", "type": "industrySort" },
+                    { "label": "行业分类", "arg": "", "type": "industryType" }
+                ]
+            },{
+                "name": "基金持有的第N大行业比例", "code": "ccx_fund_hold_top_industry_ratio", "des": "<p>基金滚动最近若干期持有的第N大行业的比例</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "滚动期数", "arg": "", "type": "scrollNumber" },
+                    { "label": "行业排名", "arg": "", "type": "industrySort" },
+                    { "label": "行业分类", "arg": "", "type": "industryType" }
+                ]
+            },{
+                "name": "基金行业标签", "code": "ccx_fund_industry_label", "des": "<p>根据基金半年报及年报披露全部持仓股票及股票所属的行业计算基金持有行业的比例，滚动最近4期的持仓占比超过50%的行业即为该基金的行业标签</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "行业分类", "arg": "", "type": "industryType" }
+                ]
+            },{
+                "name": "基金打新收益", "code": "ccx_fund_hold_newstock_ret", "des": "<p>根据新上市股披露的新股中签明细以及基金打新开板即卖的策略估计基金每日的稀有新股的收益</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },{
+                "name": "基金经理卸任标签", "code": "ccx_fund_manager_dimision", "des": "<p>基金最近一段时间是否有基金经理卸任%的行业即为该基金的行业标签</p>", "argList": [
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" },
+                    { "label": "滚动区间", "arg": "", "type": "scrollNumber1" }
+                ]
+            }
+        ]
+    },
+    {
+        "name":"中诚信指数函数",
+        "list":[
+            {
+                "name":"指数代码",
+                "code":"ccx_index_code",
+                "isSpecial":true,
+                "des":"<p>获取中诚信指数发布的各类指数全部代码，包括股票指数、债券指数、基金指数等</p>",
+                "argList":[
+                    { "label": "指数类型", "arg": "", "type": "IndexType" }
+                ]
+            },
+            {
+                "name":"指数名称",
+                "code":"ccx_index_name",
+                "isSpecial":true,
+                "des":"<p>根据指数代码获取指数名称</p>",
+                "argList":[
+                    { "label": "基金代码", "arg": "", "type": "string" }
+                ]
+            },{
+                "name":"指数基期",
+                "code":"ccx_index_base_date",
+                "isSpecial":true,
+                "des":"<p>根据指数代码获取指数基期</p>",
+                "argList":[
+                    { "label": "基金代码", "arg": "", "type": "string" }
+                ]
+            },{
+                "name":"换仓频率",
+                "code":"ccx_index_rebalance_frequency",
+                "isSpecial":true,
+                "des":"<p>根据指数代码获取指数换仓频率</p>",
+                "argList":[
+                    { "label": "基金代码", "arg": "", "type": "string" }
+                ]
+            },{
+                "name":"加权方式",
+                "code":"ccx_index_weight_method",
+                "isSpecial":true,
+                "des":"<p>根据指数代码获取指数加权方式</p>",
+                "argList":[
+                    { "label": "基金代码", "arg": "", "type": "string" }
+                ]
+            },{
+                "name":"指数点位",
+                "code":"ccx_index_levels",
+                "des":"<p>根据指数代码获取指数点位数据</p>",
+                "argList":[
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            },{
+                "name":"指数成分权重",
+                "code":"ccx_index_weight",
+                "des":"<p>根据指数代码获取指数的成分券及权重</p>",
+                "argList":[
+                    { "label": "基金代码", "arg": "", "type": "string" },
+                    { "label": "交易日期", "arg": "", "type": "string" }
+                ]
+            }
+            
+        ]
+    }
+]

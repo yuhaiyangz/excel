@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
+  <Id>92fb7658-a4ec-46af-b1b9-0dd3de965bfb</Id>
+  <Version>2.1.0.1</Version>
+  <ProviderName>中诚信指数服务(北京)有限公司</ProviderName>
+  <DefaultLocale>ZH</DefaultLocale>
+  <DisplayName DefaultValue="中诚信指数"/>
+  <Description DefaultValue="CCXINDEX-DATA-API"/>
+  <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
+  <SupportUrl DefaultValue="https://localhost:3000/help.html"/>
+  <AppDomains>
+    <AppDomain>https://www.ccxindices.com</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="SharedRuntime" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:3000/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <Runtimes>
+          <Runtime resid="Taskpane.Url" lifetime="long"/>
+        </Runtimes>
+        <AllFormFactors>
+          <ExtensionPoint xsi:type="CustomFunctions">
+            <Script>
+              <SourceLocation resid="Functions.Script.Url"/>
+            </Script>
+            <Page>
+              <SourceLocation resid="Taskpane.Url"/>
+            </Page>
+            <Metadata>
+              <SourceLocation resid="Functions.Metadata.Url"/>
+            </Metadata>
+            <Namespace resid="Functions.Namespace"/>
+          </ExtensionPoint>
+        </AllFormFactors>
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <FunctionFile resid="Taskpane.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="TabHome">
+              <Group id="Ccxd.Home">
+                <!-- 主页 -->
+                <Label resid="Ccxd.Home.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Home.16x16"/>
+                  <bt:Image size="32" resid="Home.32x32"/>
+                  <bt:Image size="80" resid="Home.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="Ccxd.Home.Btn">
+                  <Label resid="Ccxd.Home.Btn.Label"/>
+                  <Supertip>
+                    <Title resid="Ccxd.Home.Btn.Label"/>
+                    <Description resid="Ccxd.Home.Btn.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Home.16x16"/>
+                    <bt:Image size="32" resid="Home.32x32"/>
+                    <bt:Image size="80" resid="Home.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>Office.AutoShowTaskpaneWithDocument</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+              <!-- 函数 -->
+              <Group id="Ccxd.Function">
+                <!-- 函数 -->
+                <Label resid="Ccxd.Function.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Function.16x16"/>
+                  <bt:Image size="32" resid="Function.32x32"/>
+                  <bt:Image size="80" resid="Function.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="Ccxd.Function.Btn">
+                  <Label resid="Ccxd.Function.Btn.Label"/>
+                  <Supertip>
+                    <Title resid="Ccxd.Function.Btn.Label"/>
+                    <Description resid="Ccxd.Function.Btn.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Function.16x16"/>
+                    <bt:Image size="32" resid="Function.32x32"/>
+                    <bt:Image size="80" resid="Function.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>funSearch</FunctionName>
+                  </Action>
+                </Control>
+              </Group>
+              <!-- 数据 -->
+              <Group id="Ccxd.Data">
+                <Label resid="Ccxd.Data.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Data.16x16"/>
+                  <bt:Image size="32" resid="Data.32x32"/>
+                  <bt:Image size="80" resid="Data.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="Ccxd.Data.Btn">
+                  <Label resid="Ccxd.Data.Btn.Label"/>
+                  <Supertip>
+                    <Title resid="Ccxd.Data.Btn.Label"/>
+                    <Description resid="Ccxd.Data.Btn.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Data.16x16"/>
+                    <bt:Image size="32" resid="Data.32x32"/>
+                    <bt:Image size="80" resid="Data.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>getData</FunctionName>
+                  </Action>
+                </Control>
+                <Control xsi:type="Button" id="Ccxd.Data.update">
+                  <Label resid="Ccxd.Data.update.Label"/>
+                  <Supertip>
+                    <Title resid="Ccxd.Data.update.Label"/>
+                    <Description resid="Ccxd.Data.update.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Update.16x16"/>
+                    <bt:Image size="32" resid="Update.32x32"/>
+                    <bt:Image size="80" resid="Update.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>funUpdate</FunctionName>
+                  </Action>
+                </Control>
+              </Group>
+              <!-- outLogn -->
+              <Group id="Ccxd.outLogn">
+                <Label resid="Ccxd.outLogn.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Login.16x16"/>
+                  <bt:Image size="32" resid="Login.32x32"/>
+                  <bt:Image size="80" resid="Login.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="Ccxd.outLogn.Btn">
+                  <Label resid="Ccxd.outLogn.Btn.Label"/>
+                  <Supertip>
+                    <Title resid="Ccxd.outLogn.Btn.Label"/>
+                    <Description resid="Ccxd.outLogn.Btn.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Login.16x16"/>
+                    <bt:Image size="32" resid="Login.32x32"/>
+                    <bt:Image size="80" resid="Login.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>logout</FunctionName>
+                  </Action>
+                  <Enabled>false</Enabled>
+                </Control>
+              </Group>
+              <!-- 加载项标题 -->
+              <Label resid="customTabLabel1"/>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
+        <!-- home -->
+        <bt:Image id="Home.16x16" DefaultValue="https://localhost:3000/assets/home-16.png"/>
+        <bt:Image id="Home.32x32" DefaultValue="https://localhost:3000/assets/home-32.png"/>
+        <bt:Image id="Home.80x80" DefaultValue="https://localhost:3000/assets/home-80.png"/>
+        <!-- 函数 -->
+        <bt:Image id="Function.16x16" DefaultValue="https://localhost:3000/assets/function-16.png"/>
+        <bt:Image id="Function.32x32" DefaultValue="https://localhost:3000/assets/function-32.png"/>
+        <bt:Image id="Function.80x80" DefaultValue="https://localhost:3000/assets/function-80.png"/>
+        <!-- 账号登录 -->
+        <bt:Image id="Login.16x16" DefaultValue="https://localhost:3000/assets/login-16.png"/>
+        <bt:Image id="Login.32x32" DefaultValue="https://localhost:3000/assets/login-32.png"/>
+        <bt:Image id="Login.80x80" DefaultValue="https://localhost:3000/assets/login-80.png"/>
+        <!-- 数据 -->
+        <bt:Image id="Data.16x16" DefaultValue="https://localhost:3000/assets/data-16.png"/>
+        <bt:Image id="Data.32x32" DefaultValue="https://localhost:3000/assets/data-32.png"/>
+        <bt:Image id="Data.80x80" DefaultValue="https://localhost:3000/assets/data-80.png"/>
+        <!-- 函数编辑 -->
+        <bt:Image id="Update.16x16" DefaultValue="https://localhost:3000/assets/update-16.png"/>
+        <bt:Image id="Update.32x32" DefaultValue="https://localhost:3000/assets/update-32.png"/>
+        <bt:Image id="Update.80x80" DefaultValue="https://localhost:3000/assets/update-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Functions.Script.Url" DefaultValue="https://localhost:3000/functions.js"/>
+        <bt:Url id="Functions.Metadata.Url" DefaultValue="https://localhost:3000/functions.json"/>
+        <bt:Url id="Functions.Page.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
+        <!-- 主页 -->
+        <bt:Url id="Ccxd.Function.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Functions.Namespace" DefaultValue="CCX"/>
+        <bt:String id="GetStarted.Title" DefaultValue="中诚信指数Excel加载项"/>
+        <bt:String id="customTabLabel1" DefaultValue="中诚信指数" />
+        <!-- 主页 -->
+        <bt:String id="Ccxd.Home.Label" DefaultValue="主页"/>
+        <bt:String id="Ccxd.Home.Btn.Label" DefaultValue="主页"/>
+        <!-- 函数 -->
+        <bt:String id="Ccxd.Function.Label" DefaultValue="函数"/>
+        <bt:String id="Ccxd.Function.Btn.Label" DefaultValue="函数搜索"/>
+        <!-- 数据插入 -->
+        <bt:String id="Ccxd.DataInsert.Label" DefaultValue="数据"/>
+        <bt:String id="Ccxd.DataInsert.Btn.Label" DefaultValue="数据插入"/>
+        <!-- 数据 -->
+        <bt:String id="Ccxd.Data.Label" DefaultValue="数据"/>
+        <bt:String id="Ccxd.Data.Btn.Label" DefaultValue="数据导入"/>
+        <bt:String id="Ccxd.Data.update.Label" DefaultValue="函数编辑"/>
+        <!-- 账号登录 -->
+        <bt:String id="Ccxd.outLogn.Label" DefaultValue="登录"/>
+        <bt:String id="Ccxd.outLogn.Btn.Label" DefaultValue="账号登录"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="加载成功，快去体验吧。"/>
+        <!-- 主页 -->
+        <bt:String id="Ccxd.Home.Btn.Tooltip" DefaultValue="获取中诚信指数关于股票、债券以及基金等金融资产的研究产出数据"/>
+        <!-- 函数 -->
+        <bt:String id="Ccxd.Function.Btn.Tooltip" DefaultValue="点击将为您展示所有函数"/>
+        <!-- 数据插入 -->
+        <bt:String id="Ccxd.Data.Btn.Tooltip" DefaultValue="点击将数据导入到表格"/>
+        <bt:String id="Ccxd.Data.update.Tooltip" DefaultValue="点击编辑函数"/>
+        <!-- 账号登录 -->
+        <bt:String id="Ccxd.outLogn.Btn.Tooltip" DefaultValue="点击账号登录"/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

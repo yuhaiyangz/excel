@@ -1,0 +1,321 @@
+<!--
+ * @Author: yuhaiyangz@163.com
+ * @Date: 2022-09-27 11:56:06
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2023-04-04 09:13:47
+ * @Description: 任务窗口
+-->
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->
+<!-- This file shows how to design a first-run page that provides a welcome screen to the user about the features of the add-in. -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CCXI</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/axios.min.js"></script>
+    <!-- Import style -->
+    <!-- webpackIgnore: true -->
+    <link rel="stylesheet" href="/assets/js/element-ui.css" />
+    <!-- Import Vue 3 -->
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/vue.global.js"></script>
+    <!-- Import component library -->
+    <!-- webpackIgnore: true -->
+    <script src="/assets/js/element.ui.full.js"></script>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #409EFF;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            justify-content: space-between;
+        }
+
+        .header img {
+            height: 80%;
+        }
+
+        .header p {
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        footer {
+            width: 100%;
+            position: fixed;
+            border-top: 1px solid #c3c3c3;
+            bottom: 0;
+            left: 0;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            display: none;
+        }
+
+        footer a {
+            text-decoration: none;
+            color: #409EFF;
+            font-size: 12px;
+        }
+
+        .box {
+            padding: 0 10px;
+            margin-top: 10px;
+        }
+
+        .box li {
+            line-height: 1.5;
+        }
+
+        .box .des {
+            margin: 10px 0;
+            text-indent: 2em;
+            line-height: 1.5;
+        }
+
+        .box ul {
+            margin-left: 2em;
+        }
+
+        .btn {
+            width: 90%;
+            margin: 0 auto;
+            display: block;
+            margin-top: 20px;
+        }
+
+        #main {
+            padding-bottom: 20px;
+        }
+
+        .ElMessageBox {
+            margin-top: 20vh;
+            zoom: 0.8
+        }
+
+        .ul li img {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <main id="main">
+        <div v-loading="loading">
+            <header class="header">
+                <img src="/assets/logo.png" alt="">
+            </header>
+            <div class="box">
+                <h3>工具介绍</h3>
+                <p class="des">用户通过该工具可以获取中诚信指数关于各类金融产品的相关研究分析数据，该数据可以辅助用户进行相关的金融研究。数据内容包括但不限于:</p>
+                <ul>
+                    <li>1、股票：风险模型数据、特色因子数据等;</li>
+                    <li>2、债券：估值数据、信用评级数据、ESG数据、因子数据等;</li>
+                    <li>3、基金：分类数据、投资风格数据、因子数据、归因数据、基金打分数据等;</li>
+                    <li>4、中诚信编制发布的指数信息，点位、行情、成分权重等;</li>
+                    <li>5、各类金融产品数据。（数据逐步更新中，有需求欢迎联系）;</li>
+                </ul>
+            </div>
+            <el-button class="btn" type="primary" @click="onLogin" v-if="!tokenBtn">登录</el-button>
+            <el-button class="btn" @click="onLogout" v-else>退出登录</el-button>
+            <el-dialog v-model="dialogVisible" title="提示" width="100%" top="0">
+                <div>
+                    <h4>Excel资源加载失败!</h4>
+                    <p>请按一下方式手动加载！</p>
+                    <ul class="ul">
+                        <li>
+                            <h3>第一步</h3>
+                            <p>鼠标左键单击空白处，右上角会出现一个箭头,如图所示！</p>
+                            <img src="/assets/cs.png" alt="">
+                        </li>
+                        <li>
+                            <h3>第二步</h3>
+                            <img src="/assets/cs1.png" alt="">
+                        </li>
+                    </ul>
+                </div>
+                <template #footer>
+                    <span class="dialog-footer">
+                        <el-button type="primary" @click="dialogVisible = false" size="small">
+                            确认
+                        </el-button>
+                    </span>
+                </template>
+            </el-dialog>
+        </div>
+    </main>
+    <footer>
+        <a href="https://excel.ccxindices.com/join.html" target="_blank">了解更多</a>
+    </footer>
+    <script>
+        const { createApp, ref, onMounted, computed, h } = Vue;
+        const { ElMessage, ElMessageBox } = ElementPlus
+        const app = createApp({
+            setup() {
+                const loading = ref(true)//loading
+                const tokenBtn = ref(false)//是否登录
+                const dialogVisible = ref(false)
+                function onLogin() {//登录
+                    const options = {
+                        asyncContext: 'ccxd',
+                        height: 70,
+                        width: 55,
+                        promptBeforeOpen: true
+                    }
+                    let dialog;
+                    //OfficeRuntime.displayWebDialog
+                    //Office.context.ui.displayDialogAsync
+                    Office.context.ui.displayDialogAsync(window.location.origin + '/login.html', options, function (asyncResult) {
+                        dialog = asyncResult.value
+                        dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
+                        dialog.addEventHandler(Office.EventType.DialogEventReceived, function (err) {//错误
+                            console.log(err);
+                            dialog.close()
+                            dialog = null
+                        });
+                    });
+                    function processMessage(arg) {
+                        console.log(arg);
+                        const msg = JSON.parse(arg.message)
+                        const { userName, passWord, rememberPassword } = msg
+                        window.token.userName = userName;
+                        window.token.passWord = passWord;
+                        if (userName && passWord) {
+                            tokenBtn.value = true
+                        } else {
+                            tokenBtn.value = false
+                        }
+                        if (rememberPassword) {
+                            const token = JSON.stringify({ userName, passWord })
+                            var exp = new Date();
+                            exp.setTime(exp.getTime() + 1000 * 60 * 60 * 24 * 30);//过期时间
+                            // exp.setTime(exp.getTime() + 1000 * 60 * 60 * 7);//过期时间
+                            //设置cookie主要目的是设置token过期时间
+                            document.cookie = "token=" + token + ";expires=" + exp.toUTCString() + ";path=/";
+                        }
+                        dialog.close()
+                        dialog = null;
+                        window.enableButton(false)
+                    }
+                }
+                const onLogout = () => {//登出
+                    ElMessageBox.confirm(
+                        '确定要退出登录吗?',
+                        '警告',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning',
+                            customClass: 'ElMessageBox'
+                        }
+                    )
+                        .then(() => {
+                            setTimeout(() => {
+                                window.token.userName = ''
+                                window.token.passWord = ''
+                                tokenBtn.value = false
+                                ElMessage.error('账号已退出')
+                                var exp = new Date();
+                                exp.setTime(exp.getTime() - 1);//过期时间
+                                //设置cookie主要目的是设置token过期时间
+                                document.cookie = "token=null;expires=" + exp.toUTCString() + ";path=/";
+                                window.enableButton(true)
+                            }, 500)
+                        })
+                        .catch(() => {
+                            console.log('取消退出登录');
+                        })
+                }
+                const loadingEndFun = (timer) => {
+                    if (window.ifLoadSuccess) {
+                        timer && clearInterval(timer)
+                        Office.onReady(() => {
+                            const tokenObj = document.cookie.match(`[;\s+]?token=([^;]*)`)?.pop();
+                            if (tokenObj) {
+                                const { userName, passWord } = JSON.parse(tokenObj)
+                                window.token.userName = userName
+                                window.token.passWord = passWord
+                                tokenBtn.value = true
+                                window.enableButton(false)
+                            }else{
+                                window.enableButton(true)
+                            }
+                            loading.value = false
+                            window.onLogin = onLogin;
+                            window.onLogout = onLogout;
+                            window.alertErr = alertErr
+                        });
+                    }
+                }
+                let numIndex = 0
+                onMounted(() => {
+                    try {
+                        loadingEndFun()
+                        if (!window.ifLoadSuccess) {
+                            const timer = setInterval(() => {
+                                console.log(window.ifLoadSuccess);
+                                numIndex++
+                                if(numIndex >= 20){
+                                    loading.value = false;
+                                    clearInterval(timer)
+                                    dialogVisible.value = true
+                                }
+                                loadingEndFun(timer)
+                            }, 1000)
+                        }
+                    } catch (error) {
+                        console.log(error);
+                        dialogVisible.value = true
+                    }
+                })
+                //错误提示
+                const alertErr = (str) => {
+                    return ElMessage.error(str)
+                }
+                return {
+                    loading,
+                    onLogin,
+                    tokenBtn,
+                    onLogout,
+                    dialogVisible
+                }
+            }
+        })
+        app.use(ElementPlus)
+        app.mount('#main')
+    </script>
+</body>
+
+
+</html>
